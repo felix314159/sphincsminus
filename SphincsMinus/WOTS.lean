@@ -170,7 +170,7 @@ def wotsSkGen (params : WotsParams) (skSeed : ByteArray) (adrs : ByteArray) :
     List ByteArray :=
   let n := params.n
   (List.range params.l).map λ i =>
-    let a := adrsSetKpAddr (adrsSetType adrs WOTS_PRF) i
+    let a := adrsSetChainAddr (adrsSetType adrs WOTS_PRF) i
     hashPRF n skSeed a
 
 /-- WOTS+ chain: iterate T_l `steps` times starting from value `x` at
@@ -180,7 +180,7 @@ def wotsChain (ctx : HashCtx) (adrs : ByteArray) (x : ByteArray)
   let rec go (a : ByteArray) (val : ByteArray) (i : Nat) (remaining : Nat) : ByteArray :=
     if remaining = 0 then val
     else
-      let a' := adrsSetChainAddr a i
+      let a' := adrsSetHashAddr a i
       let val' := hashT ctx a' val
       go a val' (i + 1) (remaining - 1)
   go (adrsSetType adrs WOTS_HASH) x start steps
@@ -190,7 +190,7 @@ def wotsPkFromSk (ctx : HashCtx) (params : WotsParams) (adrs : ByteArray)
                  (sk : List ByteArray) : ByteArray :=
   let w := params.w
   let tmp := ((List.range params.l).map λ i =>
-    let a := adrsSetKpAddr (adrsSetType adrs WOTS_HASH) i
+    let a := adrsSetChainAddr (adrsSetType adrs WOTS_HASH) i
     let chainFinal := wotsChain ctx a sk[i]! 0 (w - 1)
     chainFinal.data.toList) |>.flatten
   let tmpBa := ByteArray.mk (List.toArray tmp)
@@ -220,7 +220,7 @@ def wotsSign (ctx : HashCtx) (params : WotsParams) (skSeed : ByteArray)
   -- Chain each secret according to its digit
   (List.range l).map λ i =>
     let d := fullDigits[i]!
-    let a := adrsSetKpAddr (adrsSetType adrs WOTS_HASH) i
+    let a := adrsSetChainAddr (adrsSetType adrs WOTS_HASH) i
     wotsChain ctx a sk[i]! 0 d
 
 /-- Verify a WOTS+ signature and recover the public key. -/
@@ -240,7 +240,7 @@ def wotsPkFromSig (ctx : HashCtx) (params : WotsParams) (adrs : ByteArray)
   -- Complete each chain to w-1
   let tmp := ((List.range l).map λ i =>
     let d := fullDigits[i]!
-    let a := adrsSetKpAddr (adrsSetType adrs WOTS_HASH) i
+    let a := adrsSetChainAddr (adrsSetType adrs WOTS_HASH) i
     let chainFinal := wotsChain ctx a sig[i]! d (w - 1 - d)
     chainFinal.data.toList) |>.flatten
   let tmpBa := ByteArray.mk (List.toArray tmp)
@@ -248,4 +248,3 @@ def wotsPkFromSig (ctx : HashCtx) (params : WotsParams) (adrs : ByteArray)
   hashT ctx aPk tmpBa
 
 end SphincsMinus
-

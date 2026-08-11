@@ -130,7 +130,7 @@ def wots_sk_gen(n: int, sk_seed: bytes, adrs: bytes, l: int) -> List[bytes]:
     for i in range(l):
         chain_adrs = bytearray(adrs)
         chain_adrs[16:20] = struct.pack('>I', WOTS_PRF)  # type = WOTS_PRF
-        chain_adrs[20:24] = struct.pack('>I', i)
+        chain_adrs[24:28] = struct.pack('>I', i)
         sk.append(hash_prf(n, sk_seed, bytes(chain_adrs)))
     return sk
 
@@ -140,7 +140,7 @@ def wots_chain(n: int, pk_seed: bytes, adrs: bytes, x: bytes,
     """Iterate T_l `steps` times starting from `x`."""
     chain_adrs = bytearray(adrs)
     for i in range(start, start + steps):
-        chain_adrs[24:28] = struct.pack('>I', i)
+        chain_adrs[28:32] = struct.pack('>I', i)
         x = hash_t(n, pk_seed, bytes(chain_adrs), x)
     return x
 
@@ -152,7 +152,7 @@ def wots_pk_from_sk(n: int, w: int, pk_seed: bytes, adrs: bytes,
     tmp = bytearray()
     for i in range(l):
         chain_adrs = bytearray(adrs)
-        chain_adrs[20:24] = struct.pack('>I', i)
+        chain_adrs[24:28] = struct.pack('>I', i)
         chain_adrs[16:20] = struct.pack('>I', WOTS_HASH)
         val = wots_chain(n, pk_seed, bytes(chain_adrs), sk[i], 0, w - 1)
         tmp.extend(val)
@@ -180,7 +180,7 @@ def wots_sign(n: int, w: int, pk_seed: bytes, sk_seed: bytes,
     sig = []
     for i in range(l):
         chain_adrs = bytearray(adrs)
-        chain_adrs[20:24] = struct.pack('>I', i)
+        chain_adrs[24:28] = struct.pack('>I', i)
         chain_adrs[16:20] = struct.pack('>I', WOTS_HASH)
         val = wots_chain(n, pk_seed, bytes(chain_adrs), sk[i], 0, full_digits[i])
         sig.append(val)
@@ -205,7 +205,7 @@ def wots_pk_from_sig(n: int, w: int, pk_seed: bytes, adrs: bytes,
     tmp = bytearray()
     for i in range(l):
         chain_adrs = bytearray(adrs)
-        chain_adrs[20:24] = struct.pack('>I', i)
+        chain_adrs[24:28] = struct.pack('>I', i)
         chain_adrs[16:20] = struct.pack('>I', WOTS_HASH)
         val = wots_chain(n, pk_seed, bytes(chain_adrs), sig[i],
                          full_digits[i], w - 1 - full_digits[i])
